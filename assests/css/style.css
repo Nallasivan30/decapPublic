@@ -1,0 +1,49 @@
+/* Basic styling */
+body {
+    font-family: Arial, sans-serif;
+    line-height: 1.6;
+    margin: 0;
+    padding: 0;
+    color: #333;
+}
+
+header {
+    background: #f4f4f4;
+    padding: 1rem;
+    text-align: center;
+}
+
+main {
+    padding: 2rem;
+    max-width: 1200px;
+    margin: 0 auto;
+}
+
+.post {
+    margin-bottom: 2rem;
+    padding-bottom: 1rem;
+    border-bottom: 1px solid #eee;
+}
+
+.post-image {
+    max-width: 100%;
+    height: auto;
+    margin: 1rem 0;
+}
+
+.image-item {
+    display: inline-block;
+    margin: 1rem;
+    text-align: center;
+}
+
+.image-item img {
+    max-width: 300px;
+    max-height: 300px;
+    object-fit: cover;
+}
+
+.caption {
+    margin-top: 0.5rem;
+    font-style: italic;
+}

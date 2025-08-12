@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Content Manager</title>
+    <!-- Include Decap CMS from CDN -->
+    <script src="https://unpkg.com/decap-cms@^3.0.0/dist/decap-cms.js"></script>
+</head>
+<body>
+    <script>
+        // Initialize Decap CMS
+        CMS.init({
+            config: {
+                backend: {
+                    name: "github",
+                    repo: "Nallasivan30/decapPublic",
+                    branch: "main",
+                    base_url: "https://your-oauth-app-url.com", 
+                    auth_endpoint: "api/oauth"
+                },
+                media_folder: "content/images",
+                public_folder: "/content/images",
+                collections: [
+                    {
+                        name: "posts",
+                        label: "Posts",
+                        folder: "content/posts",
+                        create: true,
+                        fields: [
+                            { label: "Title", name: "title", widget: "string" },
+                            { label: "Publish Date", name: "date", widget: "datetime" },
+                            { label: "Featured Image", name: "image", widget: "image" },
+                            { label: "Body", name: "body", widget: "markdown" }
+                        ]
+                    },
+                    {
+                        name: "images",
+                        label: "Images",
+                        folder: "content/images",
+                        create: true,
+                        fields: [
+                            { label: "Name", name: "name", widget: "string" },
+                            { label: "Image", name: "image", widget: "image" },
+                            { label: "Caption", name: "caption", widget: "string", required: false }
+                        ]
+                    }
+                ]
+            }
+        });
+    </script>
+</body>
+</html>
