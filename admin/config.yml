@@ -8,7 +8,7 @@ backend:
   name: github
   repo: Nallasivan30/decapPublic # Change this to your repo
   branch: main # Branch to update (optional; defaults to main)
-  site_domain: https://regal-gumdrop-45c902.netlify.app/ # Your GitHub Pages domain
+  base_url: https://regal-gumdrop-45c902.netlify.app/ # Your GitHub Pages domain
 
 # Alternative backend for Netlify (uncomment if using Netlify Identity)
 # backend:
