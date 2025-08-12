@@ -3,88 +3,28 @@
 <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>CMS Debug</title>
-    <style>
-        body { font-family: Arial, sans-serif; padding: 20px; }
-        .debug { background: #f0f0f0; padding: 10px; margin: 10px 0; }
-        .error { color: red; }
-        .success { color: green; }
-    </style>
+    <title>Content Manager</title>
+    <!-- Load Decap CMS -->
+    <script src="https://unpkg.com/decap-cms@^3.0.0/dist/decap-cms.js"></script>
+    <!-- Enable Netlify Identity Widget -->
+    <script src="https://identity.netlify.com/v1/netlify-identity-widget.js"></script>
 </head>
 <body>
-    <h1>CMS Debug Panel</h1>
-    <div id="status">Checking CMS status...</div>
-    <div id="logs"></div>
+    <!-- Include the script that builds the page and powers Decap CMS -->
+    <script src="https://unpkg.com/decap-cms@^3.0.0/dist/decap-cms.js"></script>
     <div id="nc-root"></div>
     
     <script>
-        const statusDiv = document.getElementById('status');
-        const logsDiv = document.getElementById('logs');
-        
-        function log(message, type = 'info') {
-            console.log(message);
-            const div = document.createElement('div');
-            div.className = `debug ${type}`;
-            div.textContent = new Date().toLocaleTimeString() + ': ' + message;
-            logsDiv.appendChild(div);
-        }
-        
-        log('Starting CMS debug...');
-        
-        // Check if running locally
-        if (location.hostname === 'localhost' || location.hostname === '127.0.0.1') {
-            log('Running on localhost - this is good for testing', 'success');
-        }
-        
-        // Load CMS
-        const script = document.createElement('script');
-        script.src = 'https://unpkg.com/decap-cms@^3.3.0/dist/decap-cms.js';
-        script.onload = function() {
-            log('CMS script loaded successfully', 'success');
-            
-            setTimeout(() => {
-                if (window.CMS) {
-                    log('CMS object available', 'success');
-                    statusDiv.innerHTML = '<span class="success">✅ CMS loaded successfully!</span>';
-                    
-                    // Try to initialize
-                    try {
-                        CMS.init();
-                        log('CMS.init() called successfully', 'success');
-                    } catch (error) {
-                        log('Error calling CMS.init(): ' + error.message, 'error');
-                    }
-                } else {
-                    log('CMS object not available', 'error');
-                    statusDiv.innerHTML = '<span class="error">❌ CMS failed to load</span>';
+        // Initialize Netlify Identity
+        if (window.netlifyIdentity) {
+            window.netlifyIdentity.on("init", user => {
+                if (!user) {
+                    window.netlifyIdentity.on("login", () => {
+                        document.location.href = "/admin/";
+                    });
                 }
-            }, 1000);
-        };
-        
-        script.onerror = function() {
-            log('Failed to load CMS script', 'error');
-            statusDiv.innerHTML = '<span class="error">❌ Failed to load CMS script</span>';
-        };
-        
-        document.head.appendChild(script);
-        
-        // Check config file
-        fetch('./config.yml')
-            .then(response => {
-                if (response.ok) {
-                    log('Config file found', 'success');
-                    return response.text();
-                } else {
-                    throw new Error('Config file not found');
-                }
-            })
-            .then(config => {
-                log('Config file content loaded', 'success');
-                console.log('Config content:', config);
-            })
-            .catch(error => {
-                log('Config file error: ' + error.message, 'error');
             });
+        }
     </script>
 </body>
 </html>

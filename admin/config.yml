@@ -1,43 +1,34 @@
-# backend:
-#   name: github
-#   repo: Nallasivan30/decapPublic
-#   branch: main
-#   site_domain: https://regal-gumdrop-45c902.netlify.app/
-
 backend:
-  name: github
-  repo: Nallasivan30/decapPublic # Change this to your repo
-  branch: main # Branch to update (optional; defaults to main)
-  base_url: https://regal-gumdrop-45c902.netlify.app/ # Your GitHub Pages domain
+  name: git-gateway
+  branch: main
+  commit_messages:
+    create: "Create {{collection}} “{{slug}}”"
+    update: "Update {{collection}} “{{slug}}”"
+    delete: "Delete {{collection}} “{{slug}}”"
+    uploadMedia: "Upload “{{path}}”"
+    deleteMedia: "Delete “{{path}}”"
 
-# Alternative backend for Netlify (uncomment if using Netlify Identity)
-# backend:
-#   name: git-gateway
-#   branch: main
-
-# For local development (uncomment when testing locally)
+# Local development backend (uncomment when testing locally)
 # backend:
 #   name: test-repo
 
-media_folder: "content/images" # Folder where uploaded files will be saved
-public_folder: "/content/images" # The src attribute for uploaded media
-
-publish_mode: editorial_workflow # Enable drafts
+media_folder: "content/images"
+public_folder: "/images"
 
 collections:
-  - name: "posts" # Used in routes, e.g., /admin/collections/posts
-    label: "Blog Posts" # Used in the UI
-    folder: "content/posts" # The path to the folder where files are stored
-    create: true # Allow users to create new documents in this collection
-    slug: "{{year}}-{{month}}-{{day}}-{{slug}}" # Filename template
-    fields: # The fields for each document
+  - name: "posts"
+    label: "Blog Posts"
+    folder: "content/posts"
+    create: true
+    slug: "{{year}}-{{month}}-{{day}}-{{slug}}"
+    fields:
       - {label: "Title", name: "title", widget: "string"}
       - {label: "Publish Date", name: "date", widget: "datetime"}
       - {label: "Featured Image", name: "image", widget: "image", required: false}
       - {label: "Body", name: "body", widget: "markdown"}
       - {label: "Tags", name: "tags", widget: "list", default: ["blog"]}
 
-  - name: "images" # Collection for managing images with metadata
+  - name: "images"
     label: "Image Gallery"
     folder: "content/images"
     create: true
@@ -51,7 +42,7 @@ collections:
       - {label: "Alt Text", name: "alt", widget: "string"}
       - {label: "Category", name: "category", widget: "select", options: ["hero", "gallery", "thumbnail"]}
 
-  - name: "settings" # Global site settings
+  - name: "settings"
     label: "Site Settings"
     files:
       - label: "Site Configuration"
