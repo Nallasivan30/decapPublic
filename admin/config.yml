@@ -1,29 +1,63 @@
+# backend:
+#   name: github
+#   repo: Nallasivan30/decapPublic
+#   branch: main
+#   site_domain: https://regal-gumdrop-45c902.netlify.app/
+
 backend:
   name: github
-  repo: Nallasivan30/decapPublic
-  branch: main
-  base_url: https://your-oauth-app-url.com
-  auth_endpoint: api/oauth
+  repo: Nallasivan30/decapPublic # Change this to your repo
+  branch: main # Branch to update (optional; defaults to main)
+  site_domain: https://regal-gumdrop-45c902.netlify.app/ # Your GitHub Pages domain
 
-media_folder: content/images
-public_folder: /content/images
+# Alternative backend for Netlify (uncomment if using Netlify Identity)
+# backend:
+#   name: git-gateway
+#   branch: main
+
+# For local development (uncomment when testing locally)
+# backend:
+#   name: test-repo
+
+media_folder: "content/images" # Folder where uploaded files will be saved
+public_folder: "/content/images" # The src attribute for uploaded media
+
+publish_mode: editorial_workflow # Enable drafts
 
 collections:
-  - name: "posts"
-    label: "Posts"
-    folder: "content/posts"
-    create: true
-    fields:
-      - { label: "Title", name: "title", widget: "string" }
-      - { label: "Publish Date", name: "date", widget: "datetime" }
-      - { label: "Featured Image", name: "image", widget: "image" }
-      - { label: "Body", name: "body", widget: "markdown" }
-  
-  - name: "images"
-    label: "Images"
+  - name: "posts" # Used in routes, e.g., /admin/collections/posts
+    label: "Blog Posts" # Used in the UI
+    folder: "content/posts" # The path to the folder where files are stored
+    create: true # Allow users to create new documents in this collection
+    slug: "{{year}}-{{month}}-{{day}}-{{slug}}" # Filename template
+    fields: # The fields for each document
+      - {label: "Title", name: "title", widget: "string"}
+      - {label: "Publish Date", name: "date", widget: "datetime"}
+      - {label: "Featured Image", name: "image", widget: "image", required: false}
+      - {label: "Body", name: "body", widget: "markdown"}
+      - {label: "Tags", name: "tags", widget: "list", default: ["blog"]}
+
+  - name: "images" # Collection for managing images with metadata
+    label: "Image Gallery"
     folder: "content/images"
     create: true
+    slug: "{{slug}}"
+    extension: "json"
+    format: "json"
     fields:
-      - { label: "Name", name: "name", widget: "string" }
-      - { label: "Image", name: "image", widget: "image" }
-      - { label: "Caption", name: "caption", widget: "string", required: false }
+      - {label: "Title", name: "title", widget: "string"}
+      - {label: "Description", name: "description", widget: "text", required: false}
+      - {label: "Image", name: "image", widget: "image"}
+      - {label: "Alt Text", name: "alt", widget: "string"}
+      - {label: "Category", name: "category", widget: "select", options: ["hero", "gallery", "thumbnail"]}
+
+  - name: "settings" # Global site settings
+    label: "Site Settings"
+    files:
+      - label: "Site Configuration"
+        name: "site"
+        file: "content/settings/site.json"
+        fields:
+          - {label: "Site Title", name: "title", widget: "string"}
+          - {label: "Description", name: "description", widget: "text"}
+          - {label: "Hero Image", name: "hero_image", widget: "image"}

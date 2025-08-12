@@ -1,110 +1,251 @@
 // GitHub API configuration
-const repoOwner = 'Nallasivan30';
-const repoName = 'decapPublic';
-const branch = 'main';
+// const repoOwner = 'Nallasivan30';
+// const repoName = 'decapPublic';
+// const branch = 'main';
 
-// Function to fetch content from GitHub
-async function fetchContent(path) {
-    try {
-        const response = await fetch(`https://api.github.com/repos/${repoOwner}/${repoName}/contents/${path}?ref=${branch}`);
-        if (!response.ok) throw new Error('Failed to fetch content');
-        const data = await response.json();
+// Configuration
+const CONFIG = {
+    GITHUB_OWNER: 'Nallasivan30', // Replace with your GitHub username
+    GITHUB_REPO: 'decapPublic', // Replace with your repo name
+    GITHUB_BRANCH: 'main'
+};
+
+// Utility functions
+const githubAPI = {
+    async fetchFile(path) {
+        const url = `https://api.github.com/repos/${CONFIG.GITHUB_OWNER}/${CONFIG.GITHUB_REPO}/contents/${path}?ref=${CONFIG.GITHUB_BRANCH}`;
+        try {
+            const response = await fetch(url);
+            if (!response.ok) {
+                throw new Error(`Failed to fetch ${path}`);
+            }
+            const data = await response.json();
+            return atob(data.content);
+        } catch (error) {
+            console.error('Error fetching file:', error);
+            return null;
+        }
+    },
+
+    async fetchDirectory(path) {
+        const url = `https://api.github.com/repos/${CONFIG.GITHUB_OWNER}/${CONFIG.GITHUB_REPO}/contents/${path}?ref=${CONFIG.GITHUB_BRANCH}`;
+        try {
+            const response = await fetch(url);
+            if (!response.ok) {
+                throw new Error(`Failed to fetch directory ${path}`);
+            }
+            return await response.json();
+        } catch (error) {
+            console.error('Error fetching directory:', error);
+            return [];
+        }
+    }
+};
+
+// Content parsers
+function parseFrontMatter(content) {
+    const lines = content.split('\n');
+    const frontMatter = {};
+    let inFrontMatter = false;
+    let contentStart = 0;
+    
+    for (let i = 0; i < lines.length; i++) {
+        const line = lines[i].trim();
         
-        if (Array.isArray(data)) {
-            // Directory listing
-            return Promise.all(data.map(async item => {
-                if (item.type === 'file') {
-                    const fileResponse = await fetch(item.download_url);
-                    return fileResponse.text();
+        if (line === '---') {
+            if (!inFrontMatter) {
+                inFrontMatter = true;
+                continue;
+            } else {
+                contentStart = i + 1;
+                break;
+            }
+        }
+        
+        if (inFrontMatter && line.includes(':')) {
+            const [key, ...valueParts] = line.split(':');
+            const value = valueParts.join(':').trim().replace(/['"]/g, '');
+            frontMatter[key.trim()] = value;
+        }
+    }
+    
+    const bodyContent = lines.slice(contentStart).join('\n');
+    return { frontMatter, content: bodyContent };
+}
+
+function formatDate(dateString) {
+    const date = new Date(dateString);
+    return date.toLocaleDateString('en-US', {
+        year: 'numeric',
+        month: 'long',
+        day: 'numeric'
+    });
+}
+
+function createPostExcerpt(content, maxLength = 150) {
+    const textContent = content.replace(/[#*\[\]]/g, '').trim();
+    return textContent.length > maxLength 
+        ? textContent.substring(0, maxLength) + '...' 
+        : textContent;
+}
+
+// Content loaders
+async function loadPosts() {
+    const postsContainer = document.getElementById('posts-container');
+    if (!postsContainer) return;
+
+    postsContainer.innerHTML = '<div class="loading">Loading posts...</div>';
+
+    try {
+        const files = await githubAPI.fetchDirectory('content/posts');
+        const posts = [];
+
+        for (const file of files) {
+            if (file.name.endsWith('.md')) {
+                const content = await githubAPI.fetchFile(`content/posts/${file.name}`);
+                if (content) {
+                    const { frontMatter, content: bodyContent } = parseFrontMatter(content);
+                    posts.push({
+                        ...frontMatter,
+                        content: bodyContent,
+                        slug: file.name.replace('.md', '')
+                    });
                 }
-                return null;
-            }));
-        } else {
-            // Single file
-            const fileResponse = await fetch(data.download_url);
-            return fileResponse.text();
+            }
+        }
+
+        // Sort posts by date (newest first)
+        posts.sort((a, b) => new Date(b.date) - new Date(a.date));
+
+        if (posts.length === 0) {
+            postsContainer.innerHTML = '<div class="loading">No posts found.</div>';
+            return;
+        }
+
+        postsContainer.innerHTML = posts.map(post => {
+            const tags = post.tags ? post.tags.split(',').map(tag => tag.trim()) : [];
+            const excerpt = createPostExcerpt(post.content);
+            const imageHtml = post.image 
+                ? `<img src="${post.image}" alt="${post.title}" class="post-image">` 
+                : '';
+
+            return `
+                <article class="post-card">
+                    ${imageHtml}
+                    <h3>${post.title}</h3>
+                    <div class="date">${formatDate(post.date)}</div>
+                    <div class="excerpt">${excerpt}</div>
+                    <div class="tags">
+                        ${tags.map(tag => `<span class="tag">${tag}</span>`).join('')}
+                    </div>
+                </article>
+            `;
+        }).join('');
+
+    } catch (error) {
+        console.error('Error loading posts:', error);
+        postsContainer.innerHTML = '<div class="loading">Error loading posts.</div>';
+    }
+}
+
+async function loadImages() {
+    const imagesContainer = document.getElementById('images-container');
+    if (!imagesContainer) return;
+
+    imagesContainer.innerHTML = '<div class="loading">Loading images...</div>';
+
+    try {
+        const files = await githubAPI.fetchDirectory('content/images');
+        const images = [];
+
+        for (const file of files) {
+            if (file.name.endsWith('.json')) {
+                const content = await githubAPI.fetchFile(`content/images/${file.name}`);
+                if (content) {
+                    try {
+                        const imageData = JSON.parse(content);
+                        images.push(imageData);
+                    } catch (parseError) {
+                        console.error(`Error parsing ${file.name}:`, parseError);
+                    }
+                }
+            }
+        }
+
+        if (images.length === 0) {
+            imagesContainer.innerHTML = '<div class="loading">No images found.</div>';
+            return;
+        }
+
+        imagesContainer.innerHTML = images.map(image => `
+            <div class="image-card">
+                <img src="${image.image}" alt="${image.alt || image.title}">
+                <h4>${image.title}</h4>
+                ${image.description ? `<p>${image.description}</p>` : ''}
+            </div>
+        `).join('');
+
+    } catch (error) {
+        console.error('Error loading images:', error);
+        imagesContainer.innerHTML = '<div class="loading">Error loading images.</div>';
+    }
+}
+
+async function loadHeroImage() {
+    const heroImage = document.getElementById('hero-image');
+    if (!heroImage) return;
+
+    try {
+        const settingsContent = await githubAPI.fetchFile('content/settings/site.json');
+        if (settingsContent) {
+            const settings = JSON.parse(settingsContent);
+            if (settings.hero_image) {
+                heroImage.style.backgroundImage = `url(${settings.hero_image})`;
+            }
         }
     } catch (error) {
-        console.error('Error fetching content:', error);
-        return null;
+        console.error('Error loading hero image:', error);
     }
 }
 
-// Function to parse frontmatter from markdown
-function parseFrontmatter(markdown) {
-    const frontmatter = {};
-    const bodyStart = markdown.indexOf('---', 3) + 3;
-    const frontmatterText = markdown.slice(3, bodyStart - 3).trim();
+// Initialize the application
+document.addEventListener('DOMContentLoaded', function() {
+    console.log('Loading content from GitHub repository...');
     
-    frontmatterText.split('\n').forEach(line => {
-        const colonIndex = line.indexOf(':');
-        if (colonIndex > -1) {
-            const key = line.slice(0, colonIndex).trim();
-            const value = line.slice(colonIndex + 1).trim();
-            frontmatter[key] = value.replace(/^['"]|['"]$/g, '');
-        }
-    });
-    
-    const body = markdown.slice(bodyStart).trim();
-    return { ...frontmatter, body };
-}
-
-// Display posts
-async function displayPosts() {
-    const postsContainer = document.getElementById('posts-container');
-    const posts = await fetchContent('content/posts');
-    
-    if (posts && posts.length) {
-        posts.forEach(postContent => {
-            if (!postContent) return;
-            
-            const { title, date, image, body } = parseFrontmatter(postContent);
-            const postElement = document.createElement('article');
-            postElement.className = 'post';
-            postElement.innerHTML = `
-                <h3>${title}</h3>
-                <p class="date">${new Date(date).toLocaleDateString()}</p>
-                ${image ? `<img src="${image}" alt="${title}" class="post-image">` : ''}
-                <div class="post-body">${marked.parse(body)}</div>
-            `;
-            postsContainer.appendChild(postElement);
-        });
-    } else {
-        postsContainer.innerHTML = '<p>No posts found.</p>';
-    }
-}
-
-// Display images
-async function displayImages() {
-    const imagesContainer = document.getElementById('images-container');
-    const images = await fetchContent('content/images');
-    
-    if (images && images.length) {
-        images.forEach(imageContent => {
-            if (!imageContent) return;
-            
-            const { name, caption } = parseFrontmatter(imageContent);
-            const imageElement = document.createElement('div');
-            imageElement.className = 'image-item';
-            imageElement.innerHTML = `
-                <img src="/content/images/${name}" alt="${caption || name}">
-                ${caption ? `<p class="caption">${caption}</p>` : ''}
-            `;
-            imagesContainer.appendChild(imageElement);
-        });
-    } else {
-        imagesContainer.innerHTML = '<p>No images found.</p>';
-    }
-}
-
-// Initialize the page
-document.addEventListener('DOMContentLoaded', () => {
-    // Include marked.js for markdown parsing
-    const script = document.createElement('script');
-    script.src = 'https://cdn.jsdelivr.net/npm/marked/marked.min.js';
-    script.onload = () => {
-        displayPosts();
-        displayImages();
-    };
-    document.head.appendChild(script);
+    // Load all content
+    loadPosts();
+    loadImages();
+    loadHeroImage();
 });
+
+// Refresh content every 5 minutes when page is active
+let refreshInterval;
+
+function startContentRefresh() {
+    refreshInterval = setInterval(() => {
+        if (!document.hidden) {
+            console.log('Refreshing content...');
+            loadPosts();
+            loadImages();
+            loadHeroImage();
+        }
+    }, 300000); // 5 minutes
+}
+
+function stopContentRefresh() {
+    if (refreshInterval) {
+        clearInterval(refreshInterval);
+    }
+}
+
+// Handle page visibility changes
+document.addEventListener('visibilitychange', function() {
+    if (document.hidden) {
+        stopContentRefresh();
+    } else {
+        startContentRefresh();
+    }
+});
+
+// Start refresh cycle
+startContentRefresh();
