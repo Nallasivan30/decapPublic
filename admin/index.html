@@ -3,47 +3,88 @@
 <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Content Manager</title>
-    <script src="https://unpkg.com/decap-cms@^3.0.0/dist/decap-cms.js"></script>
-    <script>
-        if (window.netlifyIdentity) {
-            window.netlifyIdentity.on("init", user => {
-                if (!user) {
-                    window.netlifyIdentity.on("login", () => {
-                        document.location.href = "/admin/";
-                    });
-                }
-            });
-        }
-    </script>
+    <title>CMS Debug</title>
+    <style>
+        body { font-family: Arial, sans-serif; padding: 20px; }
+        .debug { background: #f0f0f0; padding: 10px; margin: 10px 0; }
+        .error { color: red; }
+        .success { color: green; }
+    </style>
 </head>
 <body>
-    <!-- A little help text for the admin panel -->
+    <h1>CMS Debug Panel</h1>
+    <div id="status">Checking CMS status...</div>
+    <div id="logs"></div>
+    <div id="nc-root"></div>
+    
     <script>
-        CMS.registerPreviewTemplate("posts", createPostPreview);
-        CMS.registerPreviewTemplate("images", createImagePreview);
+        const statusDiv = document.getElementById('status');
+        const logsDiv = document.getElementById('logs');
         
-        function createPostPreview(props) {
-            const { entry, widgetFor, widgetsFor } = props;
-            const title = entry.getIn(['data', 'title']);
-            const body = widgetFor('body');
-            
-            return h('div', {},
-                h('h1', {}, title),
-                h('div', {}, body)
-            );
+        function log(message, type = 'info') {
+            console.log(message);
+            const div = document.createElement('div');
+            div.className = `debug ${type}`;
+            div.textContent = new Date().toLocaleTimeString() + ': ' + message;
+            logsDiv.appendChild(div);
         }
         
-        function createImagePreview(props) {
-            const { entry } = props;
-            const title = entry.getIn(['data', 'title']);
-            const image = entry.getIn(['data', 'image']);
-            
-            return h('div', {},
-                h('h2', {}, title),
-                h('img', { src: image, alt: title, style: 'max-width: 300px;' })
-            );
+        log('Starting CMS debug...');
+        
+        // Check if running locally
+        if (location.hostname === 'localhost' || location.hostname === '127.0.0.1') {
+            log('Running on localhost - this is good for testing', 'success');
         }
+        
+        // Load CMS
+        const script = document.createElement('script');
+        script.src = 'https://unpkg.com/decap-cms@^3.3.0/dist/decap-cms.js';
+        script.onload = function() {
+            log('CMS script loaded successfully', 'success');
+            
+            setTimeout(() => {
+                if (window.CMS) {
+                    log('CMS object available', 'success');
+                    statusDiv.innerHTML = '<span class="success">✅ CMS loaded successfully!</span>';
+                    
+                    // Try to initialize
+                    try {
+                        CMS.init();
+                        log('CMS.init() called successfully', 'success');
+                    } catch (error) {
+                        log('Error calling CMS.init(): ' + error.message, 'error');
+                    }
+                } else {
+                    log('CMS object not available', 'error');
+                    statusDiv.innerHTML = '<span class="error">❌ CMS failed to load</span>';
+                }
+            }, 1000);
+        };
+        
+        script.onerror = function() {
+            log('Failed to load CMS script', 'error');
+            statusDiv.innerHTML = '<span class="error">❌ Failed to load CMS script</span>';
+        };
+        
+        document.head.appendChild(script);
+        
+        // Check config file
+        fetch('./config.yml')
+            .then(response => {
+                if (response.ok) {
+                    log('Config file found', 'success');
+                    return response.text();
+                } else {
+                    throw new Error('Config file not found');
+                }
+            })
+            .then(config => {
+                log('Config file content loaded', 'success');
+                console.log('Config content:', config);
+            })
+            .catch(error => {
+                log('Config file error: ' + error.message, 'error');
+            });
     </script>
 </body>
 </html>
