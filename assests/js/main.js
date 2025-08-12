@@ -209,6 +209,72 @@ async function loadHeroImage() {
     }
 }
 
+
+async function loadTestimonials() {
+    const testimonialsContainer = document.getElementById('testimonials-container');
+    if (!testimonialsContainer) return;
+
+    testimonialsContainer.innerHTML = '<div class="loading">Loading testimonials...</div>';
+
+    try {
+        const files = await githubAPI.fetchDirectory('content/testimonials');
+        const testimonials = [];
+
+        for (const file of files) {
+            if (file.name.endsWith('.json')) {
+                const content = await githubAPI.fetchFile(`content/testimonials/${file.name}`);
+                if (content) {
+                    try {
+                        const testimonialData = JSON.parse(content);
+                        testimonials.push(testimonialData);
+                    } catch (parseError) {
+                        console.error(`Error parsing ${file.name}:`, parseError);
+                    }
+                }
+            }
+        }
+
+        if (testimonials.length === 0) {
+            testimonialsContainer.innerHTML = '<div class="loading">No testimonials found.</div>';
+            return;
+        }
+
+        testimonialsContainer.innerHTML = testimonials.map(t => {
+            const rating = parseFloat(t.rating) || 5;
+
+            // Full stars
+            const fullStars = Math.floor(rating);
+            // Half star if rating has decimal >= 0.5
+            const halfStar = rating % 1 >= 0.5 ? 1 : 0;
+            // Remaining empty stars
+            const emptyStars = 5 - fullStars - halfStar;
+
+            const starsHtml = 
+                '<i class="fas fa-star"></i>'.repeat(fullStars) +
+                (halfStar ? '<i class="fas fa-star-half-alt"></i>' : '') +
+                '<i class="far fa-star"></i>'.repeat(emptyStars);
+
+            return `
+                <div class="testimonial-card">
+                    <div class="stars">${starsHtml}</div>
+                    <p>"${t.review}"</p>
+                    <div class="customer-info">
+                        <h4>${t.name}</h4>
+                        ${t.role ? `<span>${t.role}</span>` : ''}
+                    </div>
+                </div>
+            `;
+        }).join('');
+
+    } catch (error) {
+        console.error('Error loading testimonials:', error);
+        testimonialsContainer.innerHTML = '<div class="loading">Error loading testimonials.</div>';
+    }
+}
+
+
+
+
 // Initialize the application
 document.addEventListener('DOMContentLoaded', function() {
     console.log('Loading content from GitHub repository...');
@@ -217,6 +283,7 @@ document.addEventListener('DOMContentLoaded', function() {
     loadPosts();
     loadImages();
     loadHeroImage();
+    loadTestimonials(); // ✅ New
 });
 
 // Refresh content every 5 minutes when page is active
@@ -229,6 +296,7 @@ function startContentRefresh() {
             loadPosts();
             loadImages();
             loadHeroImage();
+            loadTestimonials();
         }
     }, 300000); // 5 minutes
 }

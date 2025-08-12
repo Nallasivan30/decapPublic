@@ -49,3 +49,17 @@ collections:
           - {label: "Site Title", name: "title", widget: "string"}
           - {label: "Description", name: "description", widget: "text"}
           - {label: "Hero Image", name: "hero_image", widget: "image"}
+
+  - name: "testimonials"
+    label: "Testimonials"
+    folder: "content/testimonials"
+    create: true
+    slug: "{{slug}}"
+    extension: "json"
+    format: "json"
+    fields:
+      - {label: "Customer Name", name: "name", widget: "string"}
+      - {label: "Role / Subtitle", name: "role", widget: "string", required: false}
+      - {label: "Review Text", name: "review", widget: "text"}
+      - {label: "Star Rating", name: "rating", widget: "number", value_type: "int", min: 1, max: 5, default: 5}
+      - {label: "Profile Image", name: "image", widget: "image", required: false}
