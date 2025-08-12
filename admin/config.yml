@@ -9,8 +9,8 @@ backend:
   branch: main
 
 
-media_folder: "content/images"
-public_folder: "/images"
+media_folder: "content/images"    # Where media files are saved
+public_folder: "/content/images"  # Public path for media
 
 collections:
   - name: "posts"

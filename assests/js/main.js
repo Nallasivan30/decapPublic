@@ -126,8 +126,9 @@ async function loadPosts() {
             const tags = post.tags ? post.tags.split(',').map(tag => tag.trim()) : [];
             const excerpt = createPostExcerpt(post.content);
             const imageHtml = post.image 
-                ? `<img src="${post.image}" alt="${post.title}" class="post-image">` 
-                : '';
+            ? `<img src="https://raw.githubusercontent.com/${CONFIG.GITHUB_OWNER}/${CONFIG.GITHUB_REPO}/${CONFIG.GITHUB_BRANCH}/content/${post.image}" alt="${post.title}" class="post-image">` 
+            : '';
+
 
             return `
                 <article class="post-card">
@@ -179,7 +180,7 @@ async function loadImages() {
 
         imagesContainer.innerHTML = images.map(image => `
             <div class="image-card">
-                <img src="${image.image}" alt="${image.alt || image.title}">
+                <img src="https://raw.githubusercontent.com/${CONFIG.GITHUB_OWNER}/${CONFIG.GITHUB_REPO}/${CONFIG.GITHUB_BRANCH}/content/${image.image}" alt="${image.alt || image.title}">
                 <h4>${image.title}</h4>
                 ${image.description ? `<p>${image.description}</p>` : ''}
             </div>
