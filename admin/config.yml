@@ -1,16 +1,13 @@
+# backend:
+#   name: github
+#   repo: Nallasivan30/decapPublic  # Format: username/repo
+#   branch: main                    # Your default branch
+#   site_domain: https://regal-gumdrop-45c902.netlify.app  # No trailing slash!
+
 backend:
   name: git-gateway
   branch: main
-  commit_messages:
-    create: "Create {{collection}} “{{slug}}”"
-    update: "Update {{collection}} “{{slug}}”"
-    delete: "Delete {{collection}} “{{slug}}”"
-    uploadMedia: "Upload “{{path}}”"
-    deleteMedia: "Delete “{{path}}”"
 
-# Local development backend (uncomment when testing locally)
-# backend:
-#   name: test-repo
 
 media_folder: "content/images"
 public_folder: "/images"
